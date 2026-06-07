@@ -221,4 +221,6 @@ cred.txt/
 notebooks/
 local_s3/
 
+.env
+
 
