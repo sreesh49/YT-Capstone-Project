@@ -1,0 +1,12 @@
+
+
+https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow
+
+
+import dagshub
+dagshub.init(repo_owner='sreesh49', repo_name='YT-Capstone-Project', mlflow=True)
+
+import mlflow
+with mlflow.start_run():
+  mlflow.log_param('parameter name', 'value')
+  mlflow.log_metric('metric name', 1)
