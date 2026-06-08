@@ -17,7 +17,10 @@ from src.logger import logging
 
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
 
-if dagshub_token and dagshub_token.strip():
+if os.getenv("CI") == "true":
+    print("CI detected → skipping DAGsHub tracking completely")
+
+elif dagshub_token:
     os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
     os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
@@ -25,10 +28,10 @@ if dagshub_token and dagshub_token.strip():
         repo_owner='sreesh49',
         repo_name='YT-Capstone-Project',
         mlflow=True,
-        oauth=False
+        auth_token=dagshub_token  # IMPORTANT FIX
     )
 else:
-    print("⚠️ DAGSHUB_TOKEN missing → running without DagsHub tracking")
+    print("No DAGSHUB_TOKEN → skipping tracking")
 
 
 def load_model(file_path: str):
