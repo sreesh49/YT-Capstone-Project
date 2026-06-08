@@ -1,156 +1,120 @@
+import os
+import json
+import mlflow
+import mlflow.sklearn
+import dagshub
 import numpy as np
 import pandas as pd
 import pickle
-import json
+
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
-import logging
-import mlflow
-import mlflow.sklearn
-import os
 from src.logger import logging
 
-# Use local MLflow tracking (no DagsHub authentication required)
-mlflow.set_tracking_uri("file:./mlruns")
 
-# The rest of your functions (load_model, load_data, etc.) remain exactly the same...
-# Below code block is for production use
-# -------------------------------------------------------------------------------------
-# Set up DagsHub credentials for MLflow tracking
+# =========================
+# MLflow Setup (DVC + CI)
+# =========================
+def setup_mlflow():
+    import os
+    import mlflow
+    import dagshub
 
+    token = os.getenv("DAGSHUB_TOKEN")
 
+    if not token:
+        raise EnvironmentError("DAGSHUB_TOKEN not set")
 
+    # 🔥 IMPORTANT: correct DagsHub MLflow auth
+    os.environ["MLFLOW_TRACKING_USERNAME"] = "token"
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = token
 
-dagshub_token = os.getenv("DAGSHUB_TOKEN")
+    mlflow.set_tracking_uri(
+        "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
+    )
 
-if not dagshub_token:
-    raise EnvironmentError("DAGSHUB_TOKEN environment variable is not set")
+    dagshub.init(
+        repo_owner="sreesh49",
+        repo_name="YT-Capstone-Project",
+        mlflow=True
+    )
 
-
-
-
-os.environ["MLFLOW_TRACKING_USERNAME"] = "sreesh49"
-os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
-
-dagshub_url = "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
-repo_owner = "sreesh49"
-repo_name = "YT-Capstone-Project"
-
-# -------------------------------------------------------------------------------------
-
-# Below code block is for local use
-# -------------------------------------------------------------------------------------
-# mlflow.set_tracking_uri('https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow')
-# dagshub.init(repo_owner='sreesh49', repo_name='YT-Capstone-Project', mlflow=True)
-# -------------------------------------------------------------------------------------
-
-
-def load_model(file_path: str):
-    """Load the trained model from a file."""
-    try:
-        with open(file_path, 'rb') as file:
-            model = pickle.load(file)
-        logging.info('Model loaded from %s', file_path)
-        return model
-    except FileNotFoundError:
-        logging.error('File not found: %s', file_path)
-        raise
-    except Exception as e:
-        logging.error('Unexpected error occurred while loading the model: %s', e)
-        raise
-
-def load_data(file_path: str) -> pd.DataFrame:
-    """Load data from a CSV file."""
-    try:
-        df = pd.read_csv(file_path)
-        logging.info('Data loaded from %s', file_path)
-        return df
-    except pd.errors.ParserError as e:
-        logging.error('Failed to parse the CSV file: %s', e)
-        raise
-    except Exception as e:
-        logging.error('Unexpected error occurred while loading the data: %s', e)
-        raise
-
-def evaluate_model(clf, X_test: np.ndarray, y_test: np.ndarray) -> dict:
-    """Evaluate the model and return the evaluation metrics."""
-    try:
-        y_pred = clf.predict(X_test)
-        y_pred_proba = clf.predict_proba(X_test)[:, 1]
-
-        accuracy = accuracy_score(y_test, y_pred)
-        precision = precision_score(y_test, y_pred)
-        recall = recall_score(y_test, y_pred)
-        auc = roc_auc_score(y_test, y_pred_proba)
-
-        metrics_dict = {
-            'accuracy': accuracy,
-            'precision': precision,
-            'recall': recall,
-            'auc': auc
-        }
-        logging.info('Model evaluation metrics calculated')
-        return metrics_dict
-    except Exception as e:
-        logging.error('Error during model evaluation: %s', e)
-        raise
-
-def save_metrics(metrics: dict, file_path: str) -> None:
-    """Save the evaluation metrics to a JSON file."""
-    try:
-        with open(file_path, 'w') as file:
-            json.dump(metrics, file, indent=4)
-        logging.info('Metrics saved to %s', file_path)
-    except Exception as e:
-        logging.error('Error occurred while saving the metrics: %s', e)
-        raise
-
-def save_model_info(run_id: str, model_path: str, file_path: str) -> None:
-    """Save the model run ID and path to a JSON file."""
-    try:
-        model_info = {'run_id': run_id, 'model_path': model_path}
-        with open(file_path, 'w') as file:
-            json.dump(model_info, file, indent=4)
-        logging.debug('Model info saved to %s', file_path)
-    except Exception as e:
-        logging.error('Error occurred while saving the model info: %s', e)
-        raise
-
-def main():
     mlflow.set_experiment("my-dvc-pipeline")
-    with mlflow.start_run() as run:  # Start an MLflow run
-        try:
-            clf = load_model('./models/model.pkl')
-            test_data = load_data('./data/processed/test_bow.csv')
-            
-            X_test = test_data.iloc[:, :-1].values
-            y_test = test_data.iloc[:, -1].values
 
-            metrics = evaluate_model(clf, X_test, y_test)
-            
-            save_metrics(metrics, 'reports/metrics.json')
-            
-            # Log metrics to MLflow
-            for metric_name, metric_value in metrics.items():
-                mlflow.log_metric(metric_name, metric_value)
-            
-            # Log model parameters to MLflow
-            if hasattr(clf, 'get_params'):
-                params = clf.get_params()
-                for param_name, param_value in params.items():
-                    mlflow.log_param(param_name, param_value)
-            
-            # Log model to MLflow
-            mlflow.sklearn.log_model(clf, "model")
-            
-            # Save model info
-            save_model_info(run.info.run_id, "model", 'reports/experiment_info.json')
-            
-            # Log the metrics file to MLflow
-            mlflow.log_artifact('reports/metrics.json')
 
-        except Exception as e:
-            logging.exception("Failed to complete the model evaluation process")
-            raise
+# =========================
+# Utils
+# =========================
+def load_model(path):
+    with open(path, "rb") as f:
+        return pickle.load(f)
 
-if __name__ == '__main__':
+
+def load_data(path):
+    return pd.read_csv(path)
+
+
+def evaluate(model, X, y):
+
+    y_pred = model.predict(X)
+    y_proba = model.predict_proba(X)[:, 1]
+
+    return {
+        "accuracy": accuracy_score(y, y_pred),
+        "precision": precision_score(y, y_pred),
+        "recall": recall_score(y, y_pred),
+        "auc": roc_auc_score(y, y_proba)
+    }
+
+
+def save_json(data, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+# =========================
+# Main
+# =========================
+def main():
+
+    setup_mlflow()
+
+    with mlflow.start_run() as run:
+
+        model = load_model("./models/model.pkl")
+        df = load_data("./data/processed/test_bow.csv")
+
+        X = df.iloc[:, :-1].values
+        y = df.iloc[:, -1].values
+
+        metrics = evaluate(model, X, y)
+
+        # save locally (DVC artifact)
+        save_json(metrics, "reports/metrics.json")
+
+        # log MLflow metrics
+        mlflow.log_metrics(metrics)
+
+        # log params (safe check)
+        if hasattr(model, "get_params"):
+            mlflow.log_params(model.get_params())
+
+        # log model artifact
+        mlflow.sklearn.log_model(model, "model")
+
+        # save run info (IMPORTANT for registration step)
+        save_json(
+            {
+                "run_id": run.info.run_id,
+                "model_path": "model"
+            },
+            "reports/experiment_info.json"
+        )
+
+        mlflow.log_artifact("reports/metrics.json")
+
+        logging.info("Model evaluation completed")
+
+
+if __name__ == "__main__":
     main()
