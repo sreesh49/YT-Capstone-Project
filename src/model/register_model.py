@@ -14,11 +14,12 @@ warnings.filterwarnings("ignore")
 # Below code block is for production use
 # -------------------------------------------------------------------------------------
 # Set up DagsHub credentials for MLflow tracking
-dagshub_token = os.getenv("CAPSTONE_TEST")
-if not dagshub_token:
-    raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
+dagshub_token = os.getenv("DAGSHUB_TOKEN")
 
-os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+if dagshub_token is None:
+    raise EnvironmentError("DAGSHUB_TOKEN environment variable is not set")
+
+os.environ["MLFLOW_TRACKING_USERNAME"] = "sreesh49"
 os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
 dagshub_url = "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
