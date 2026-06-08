@@ -72,25 +72,26 @@ def normalize_text(text):
 
 # Below code block is for local use
 # -------------------------------------------------------------------------------------
-mlflow.set_tracking_uri('https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow')
-dagshub.init(repo_owner='sreesh49', repo_name='YT-Capstone-Project', mlflow=True)
+# mlflow.set_tracking_uri('https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow')
+# dagshub.init(repo_owner='sreesh49', repo_name='YT-Capstone-Project', mlflow=True)
 # -------------------------------------------------------------------------------------
 
 # Below code block is for production use
 # -------------------------------------------------------------------------------------
 # Set up DagsHub credentials for MLflow tracking
-# dagshub_token = os.getenv("CAPSTONE_TEST")
-# if not dagshub_token:
-#     raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
+dagshub_token = os.getenv("DAGSHUB_TOKEN")
 
-# os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
-# os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+if not dagshub_token:
+    raise EnvironmentError("DAGSHUB_TOKEN environment variable is not set")
 
-# dagshub_url = "https://dagshub.com"
-# repo_owner = "sreesh49"
-# repo_name = "YT-Capstone-Project"
-# Set up MLflow tracking URI
-# mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}.mlflow')
+os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+dagshub_url = "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
+repo_owner = "sreesh49"
+repo_name = "YT-Capstone-Project"
+#Set up MLflow tracking URI
+mlflow.set_tracking_uri("https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow")
 # -------------------------------------------------------------------------------------
 
 
@@ -120,25 +121,29 @@ PREDICTION_COUNT = Counter(
 
 model_name = "my_model"
 
+
+dagshub.init(
+    repo_owner="sreesh49",
+    repo_name="YT-Capstone-Project",
+    mlflow=True)
+
 try:
+    
     client = MlflowClient()
 
     # Get all versions
-    model_versions = client.search_model_versions(
-        f"name='{model_name}'"
-    )
+    model_versions = client.search_model_versions(f"name='{model_name}'")
 
     if not model_versions:
-        raise Exception(f"No versions found for model: {model_name}")
+        raise Exception("No model versions found in MLflow registry")
 
     # Get latest version number
-    latest_version_number = max(
-        [int(mv.version) for mv in model_versions]
-    )
+    latest_version = max(int(v.version) for v in model_versions)
 
-    model_uri = f"models:/{model_name}/{latest_version_number}"
+    model_uri = f"models:/{model_name}/{latest_version}"
 
-    print(f"Loading latest model version: {latest_version_number}")
+
+    print(f"Loading latest model version: {latest_version}")
 
     # Load model
     model = mlflow.pyfunc.load_model(model_uri)

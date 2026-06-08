@@ -6,28 +6,35 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 import logging
 import mlflow
 import mlflow.sklearn
-import dagshub
 import os
 from src.logger import logging
 
+# Use local MLflow tracking (no DagsHub authentication required)
+mlflow.set_tracking_uri("file:./mlruns")
 
+# The rest of your functions (load_model, load_data, etc.) remain exactly the same...
 # Below code block is for production use
 # -------------------------------------------------------------------------------------
 # Set up DagsHub credentials for MLflow tracking
+
+
+
+
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
 
 if not dagshub_token:
     raise EnvironmentError("DAGSHUB_TOKEN environment variable is not set")
 
-os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+
+
+
+os.environ["MLFLOW_TRACKING_USERNAME"] = "sreesh49"
 os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
 dagshub_url = "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
 repo_owner = "sreesh49"
 repo_name = "YT-Capstone-Project"
 
-# Set up MLflow tracking URI
-mlflow.set_tracking_uri(dagshub_url)
 # -------------------------------------------------------------------------------------
 
 # Below code block is for local use

@@ -1,0 +1,6 @@
+artifact_location: file:///D:/my file/mlops/YT-Capstone-Project/mlruns/515253662402333591
+creation_time: 1780895952005
+experiment_id: '515253662402333591'
+last_update_time: 1780895952005
+lifecycle_stage: active
+name: my-dvc-pipeline

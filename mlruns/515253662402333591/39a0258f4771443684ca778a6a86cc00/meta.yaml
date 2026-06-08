@@ -1,0 +1,15 @@
+artifact_uri: file:///D:/my file/mlops/YT-Capstone-Project/mlruns/515253662402333591/39a0258f4771443684ca778a6a86cc00/artifacts
+end_time: 1780895961084
+entry_point_name: ''
+experiment_id: '515253662402333591'
+lifecycle_stage: active
+run_id: 39a0258f4771443684ca778a6a86cc00
+run_name: resilient-grub-215
+run_uuid: 39a0258f4771443684ca778a6a86cc00
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1780895952890
+status: 3
+tags: []
+user_id: sreesh49

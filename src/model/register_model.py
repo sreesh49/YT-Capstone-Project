@@ -26,7 +26,7 @@ dagshub_url = "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
 repo_owner = "sreesh49"
 repo_name = "YT-Capstone-Project"
 # Set up MLflow tracking URI
-mlflow.set_tracking_uri(dagshub_url)
+mlflow.set_tracking_uri("file:./mlruns")
 # -------------------------------------------------------------------------------------
 
 

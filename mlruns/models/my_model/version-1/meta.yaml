@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1780896032487
+current_stage: Staging
+description: null
+last_updated_timestamp: 1780896032521
+name: my_model
+run_id: 39a0258f4771443684ca778a6a86cc00
+run_link: null
+source: file:///D:/my file/mlops/YT-Capstone-Project/mlruns/515253662402333591/39a0258f4771443684ca778a6a86cc00/artifacts/model
+status: READY
+status_message: null
+storage_location: file:///D:/my file/mlops/YT-Capstone-Project/mlruns/515253662402333591/39a0258f4771443684ca778a6a86cc00/artifacts/model
+user_id: null
+version: 1
