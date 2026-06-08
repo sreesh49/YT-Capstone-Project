@@ -15,17 +15,12 @@ jobs:
       MLFLOW_TRACKING_URI: https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow
       MLFLOW_TRACKING_USERNAME: token
       MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+      PYTHONUNBUFFERED: 1
 
     steps:
-      # =========================
-      # Checkout
-      # =========================
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # =========================
-      # Python setup
-      # =========================
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -41,12 +36,15 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
 
       # =========================
-      # DVC cache (IMPORTANT FIX)
+      # DVC cache (FIXED)
       # =========================
       - name: Cache DVC
         uses: actions/cache@v3
         with:
-          path: .dvc/cache
+          path: |
+            .dvc/cache
+            .dvc/tmp
+            ~/.cache/pip
           key: ${{ runner.os }}-dvc-${{ hashFiles('dvc.lock') }}
 
       # =========================
@@ -74,15 +72,18 @@ jobs:
           echo "DAGSHUB TOKEN EXISTS: ${DAGSHUB_TOKEN:+YES}"
 
       # =========================
-      # Run full DVC pipeline
+      # Run DVC pipeline
       # =========================
       - name: Run DVC pipeline
+        env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
+          echo "Running DVC pipeline..."
           dvc repro
 
       # =========================
-      # Optional: push artifacts (MLflow/DVC)
+      # Optional push
       # =========================
-      - name: Push DVC changes (optional)
+      - name: Push DVC artifacts
         run: |
-          dvc push || echo "No remote push configured"
+          dvc push || echo "DVC push skipped"
