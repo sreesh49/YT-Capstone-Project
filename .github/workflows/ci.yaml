@@ -17,6 +17,9 @@ jobs:
       MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
 
     steps:
+      # =========================
+      # Checkout
+      # =========================
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -29,13 +32,22 @@ jobs:
           python-version: "3.10"
 
       # =========================
-      # Pip caching
+      # Pip cache
       # =========================
       - name: Cache pip
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+      # =========================
+      # DVC cache (IMPORTANT FIX)
+      # =========================
+      - name: Cache DVC
+        uses: actions/cache@v3
+        with:
+          path: .dvc/cache
+          key: ${{ runner.os }}-dvc-${{ hashFiles('dvc.lock') }}
 
       # =========================
       # Install dependencies
@@ -47,14 +59,14 @@ jobs:
           pip install dvc dagshub mlflow
 
       # =========================
-      # NLTK setup (IMPORTANT FIX)
+      # NLTK setup
       # =========================
       - name: Download NLTK data
         run: |
           python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet')"
 
       # =========================
-      # Debug secrets (safe)
+      # Debug secrets
       # =========================
       - name: Debug secrets
         run: |
@@ -62,8 +74,15 @@ jobs:
           echo "DAGSHUB TOKEN EXISTS: ${DAGSHUB_TOKEN:+YES}"
 
       # =========================
-      # Run DVC pipeline
+      # Run full DVC pipeline
       # =========================
       - name: Run DVC pipeline
         run: |
-          dvc repro 
+          dvc repro
+
+      # =========================
+      # Optional: push artifacts (MLflow/DVC)
+      # =========================
+      - name: Push DVC changes (optional)
+        run: |
+          dvc push || echo "No remote push configured"

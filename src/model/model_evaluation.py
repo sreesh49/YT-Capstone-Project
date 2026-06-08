@@ -1,46 +1,41 @@
 import os
 import json
+import pickle
 import mlflow
 import mlflow.sklearn
 import dagshub
-import numpy as np
 import pandas as pd
-import pickle
+import numpy as np
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
 from src.logger import logging
 
 
 # =========================
-# MLflow Setup (DVC + CI)
+# MLflow Setup (CLEAN)
 # =========================
 def setup_mlflow():
-    import os
-    import mlflow
-    import dagshub
 
     token = os.getenv("DAGSHUB_TOKEN")
-
     if not token:
         raise EnvironmentError("DAGSHUB_TOKEN not set")
 
-    # ✅ MUST be exactly this
+    # Auth for DagsHub MLflow
     os.environ["MLFLOW_TRACKING_USERNAME"] = "token"
     os.environ["MLFLOW_TRACKING_PASSWORD"] = token
 
-    os.environ["MLFLOW_TRACKING_URI"] = (
+    mlflow.set_tracking_uri(
         "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
     )
 
-    # IMPORTANT: initialize dagshub FIRST
     dagshub.init(
         repo_owner="sreesh49",
         repo_name="YT-Capstone-Project",
         mlflow=True
     )
 
-    # ONLY AFTER AUTH
     mlflow.set_experiment("my-dvc-pipeline")
+
 
 # =========================
 # Utils
@@ -55,15 +50,14 @@ def load_data(path):
 
 
 def evaluate(model, X, y):
-
-    y_pred = model.predict(X)
-    y_proba = model.predict_proba(X)[:, 1]
+    preds = model.predict(X)
+    proba = model.predict_proba(X)[:, 1]
 
     return {
-        "accuracy": accuracy_score(y, y_pred),
-        "precision": precision_score(y, y_pred),
-        "recall": recall_score(y, y_pred),
-        "auc": roc_auc_score(y, y_proba)
+        "accuracy": accuracy_score(y, preds),
+        "precision": precision_score(y, preds),
+        "recall": recall_score(y, preds),
+        "auc": roc_auc_score(y, proba)
     }
 
 
@@ -74,7 +68,7 @@ def save_json(data, path):
 
 
 # =========================
-# Main
+# MAIN
 # =========================
 def main():
 
@@ -90,20 +84,18 @@ def main():
 
         metrics = evaluate(model, X, y)
 
-        # save locally (DVC artifact)
+        # local save
         save_json(metrics, "reports/metrics.json")
 
-        # log MLflow metrics
+        # MLflow logging
         mlflow.log_metrics(metrics)
 
-        # log params (safe check)
         if hasattr(model, "get_params"):
             mlflow.log_params(model.get_params())
 
-        # log model artifact
         mlflow.sklearn.log_model(model, "model")
 
-        # save run info (IMPORTANT for registration step)
+        # save run info for register stage
         save_json(
             {
                 "run_id": run.info.run_id,
@@ -114,7 +106,7 @@ def main():
 
         mlflow.log_artifact("reports/metrics.json")
 
-        logging.info("Model evaluation completed")
+        logging.info("Model evaluation completed successfully")
 
 
 if __name__ == "__main__":

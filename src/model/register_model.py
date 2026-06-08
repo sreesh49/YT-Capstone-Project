@@ -7,36 +7,35 @@ from src.logger import logging
 
 
 # =========================
-# MLflow Setup (CI + DVC SAFE)
+# MLflow Setup
 # =========================
 def setup_mlflow():
-    import os
-    import mlflow
-    import dagshub
 
     token = os.getenv("DAGSHUB_TOKEN")
-
     if not token:
         raise EnvironmentError("DAGSHUB_TOKEN not set")
 
-    # ✅ MUST be exactly this
+    # Required for DagsHub MLflow auth
     os.environ["MLFLOW_TRACKING_USERNAME"] = "token"
     os.environ["MLFLOW_TRACKING_PASSWORD"] = token
 
-    os.environ["MLFLOW_TRACKING_URI"] = (
-        "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
-    )
+    tracking_uri = "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
 
-    
+    # IMPORTANT: set both env + explicit call
+    os.environ["MLFLOW_TRACKING_URI"] = tracking_uri
+    mlflow.set_tracking_uri(tracking_uri)
+
     dagshub.init(
         repo_owner="sreesh49",
         repo_name="YT-Capstone-Project",
         mlflow=True
     )
 
+    logging.info("MLflow setup completed")
+
 
 # =========================
-# Load experiment info
+# Load model info
 # =========================
 def load_model_info(path):
     if not os.path.exists(path):
@@ -47,7 +46,7 @@ def load_model_info(path):
 
 
 # =========================
-# Register model safely
+# Register model (SAFE)
 # =========================
 def register_model(model_name, run_id, model_path):
 
@@ -55,7 +54,7 @@ def register_model(model_name, run_id, model_path):
 
     model_uri = f"runs:/{run_id}/{model_path}"
 
-    logging.info(f"Registering model from: {model_uri}")
+    logging.info(f"Registering model: {model_uri}")
 
     # Register model
     result = mlflow.register_model(
@@ -63,20 +62,20 @@ def register_model(model_name, run_id, model_path):
         name=model_name
     )
 
-    # ✅ SAFE: alias only if registry supports it
-    try:
-        client.set_registered_model_alias(
-            name=model_name,
-            alias="staging",
-            version=result.version
-        )
-        logging.info("Alias 'staging' set successfully")
-    except Exception as e:
-        logging.warning(f"Alias setup skipped: {e}")
+    version = result.version
 
-    logging.info(
-        f"Model {model_name} version {result.version} registered successfully"
-    )
+    logging.info(f"Model registered: {model_name} v{version}")
+
+    # SAFE staging transition (CI-friendly fallback)
+    try:
+        client.transition_model_version_stage(
+            name=model_name,
+            version=version,
+            stage="Staging"
+        )
+        logging.info("Model moved to Staging")
+    except Exception as e:
+        logging.warning(f"Stage transition skipped: {e}")
 
 
 # =========================
