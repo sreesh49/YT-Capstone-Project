@@ -1,89 +1,36 @@
 name: CI Pipeline
 
-on:
-  push:
-  pull_request:
+on: push
 
 jobs:
   project-testing:
     runs-on: ubuntu-latest
 
-    env:
-      DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      MLFLOW_TRACKING_URI: https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow
-      MLFLOW_TRACKING_USERNAME: token
-      MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
-      PYTHONUNBUFFERED: 1
-
     steps:
-      - name: Checkout code
+      - name: checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: setup python
+        uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
-      # =========================
-      # Pip cache
-      # =========================
-      - name: Cache pip
+      - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-      # =========================
-      # DVC cache (FIXED)
-      # =========================
-      - name: Cache DVC
-        uses: actions/cache@v3
-        with:
-          path: |
-            .dvc/cache
-            .dvc/tmp
-            ~/.cache/pip
-          key: ${{ runner.os }}-dvc-${{ hashFiles('dvc.lock') }}
-
-      # =========================
-      # Install dependencies
-      # =========================
-      - name: Install dependencies
+      - name: install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install dvc dagshub mlflow
 
-      # =========================
-      # NLTK setup
-      # =========================
-      - name: Download NLTK data
-        run: |
-          python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet')"
-
-      # =========================
-      # Debug secrets
-      # =========================
-      - name: Debug secrets
-        run: |
-          echo "AWS KEY EXISTS: ${AWS_ACCESS_KEY_ID:+YES}"
-          echo "DAGSHUB TOKEN EXISTS: ${DAGSHUB_TOKEN:+YES}"
-
-      # =========================
-      # Run DVC pipeline
-      # =========================
-      - name: Run DVC pipeline
+      - name: run pipeline
         env:
-          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+            DAGSHUB_TOKEN: ${{ secrets.CAPSTONE_TOKEN }}
         run: |
-          echo "Running DVC pipeline..."
           dvc repro
 
-      # =========================
-      # Optional push
-      # =========================
-      - name: Push DVC artifacts
-        run: |
-          dvc push || echo "DVC push skipped"
+      

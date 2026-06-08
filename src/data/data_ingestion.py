@@ -1,18 +1,19 @@
 # data ingestion
+import sys
+import os
+
+# Add project root to Python path - MUST BE BEFORE src imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import numpy as np
 import pandas as pd
 pd.set_option('future.no_silent_downcasting', True)
 
-import os
 from sklearn.model_selection import train_test_split
 import yaml
-import logging
+from dotenv import load_dotenv
 from src.logger import logging
 from src.connections import s3_connection
-
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 def load_params(params_path: str) -> dict:
@@ -48,7 +49,6 @@ def load_data(data_url: str) -> pd.DataFrame:
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     """Preprocess the data."""
     try:
-        # df.drop(columns=['tweet_id'], inplace=True)
         logging.info("pre-processing...")
         final_df = df[df['sentiment'].isin(['positive', 'negative'])]
         final_df['sentiment'] = final_df['sentiment'].replace({'positive': 1, 'negative': 0})
@@ -74,66 +74,34 @@ def save_data(train_data: pd.DataFrame, test_data: pd.DataFrame, data_path: str)
         raise
 
 def main():
-
     try:
-        # Load parameters
+        load_dotenv() 
         params = load_params(params_path='params.yaml')
-
         test_size = params['data_ingestion']['test_size']
-
-        # Read AWS credentials from environment variables
-        aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-        aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-        # Validate credentials
-        if not aws_access_key or not aws_secret_key:
-            raise EnvironmentError(
-                "AWS credentials not found in environment variables"
-            )
-
-        # Create S3 connection
+        
+        # Initialize S3 connection - using correct environment variable names
         s3 = s3_connection.s3_operations(
-            "projectcapstone123",
-            aws_access_key,
-            aws_secret_key
+            bucket_name=os.getenv('S3_BUCKET_NAME'),
+            aws_access_key=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_key=os.getenv('AWS_SECRET_ACCESS_KEY')
         )
-
-        # Fetch dataset from S3
+        
         df = s3.fetch_file_from_s3("data.csv")
-
-        logging.info("Dataset fetched successfully from S3")
-
-        # Preprocess data
+        
+        # Check if data was fetched successfully
+        if df is None:
+            raise Exception("Failed to fetch data from S3")
+        
         final_df = preprocess_data(df)
-
-        # Train-test split
-        train_data, test_data = train_test_split(
-            final_df,
-            test_size=test_size,
-            random_state=42
-        )
-
-        # Save processed datasets
-        save_data(
-            train_data,
-            test_data,
-            data_path='./data'
-        )
-
-        logging.info("Data ingestion completed successfully")
-        print("AWS KEY EXISTS:", bool(aws_access_key))
-        print("SECRET EXISTS:", bool(aws_secret_key))
-        print("AWS KEY PREFIX:", aws_access_key[:4])
-
+        train_data, test_data = train_test_split(final_df, test_size=test_size, random_state=42)
+        save_data(train_data, test_data, data_path='./data')
+        
+        logging.info("Data ingestion completed successfully!")
+        print(f"✅ Success! Train: {len(train_data)} rows, Test: {len(test_data)} rows")
+        
     except Exception as e:
-
-        logging.error(
-            'Failed to complete the data ingestion process: %s',
-            e
-        )
-
+        logging.error('Failed to complete the data ingestion process: %s', e)
         print(f"Error: {e}")
-
 
 if __name__ == '__main__':
     main()
