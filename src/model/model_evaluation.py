@@ -142,8 +142,8 @@ def main():
             mlflow.log_artifact('reports/metrics.json')
 
         except Exception as e:
-            logging.error('Failed to complete the model evaluation process: %s', e)
-            print(f"Error: {e}")
+            logging.exception("Failed to complete the model evaluation process")
+            raise
 
 if __name__ == '__main__':
     main()
