@@ -15,20 +15,20 @@ import dagshub
 from src.logger import logging
 
 
-# Initialize DagsHub for MLflow tracking (CORRECT WAY)
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
-if not dagshub_token:
-    raise EnvironmentError("DAGSHUB_TOKEN environment variable is not set")
 
-# Initialize DagsHub - this automatically sets up MLflow tracking
-dagshub.init(repo_owner='sreesh49', repo_name='YT-Capstone-Project', mlflow=True)
+if dagshub_token and dagshub_token.strip():
+    os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
-# Set the tracking URI
-mlflow.set_tracking_uri('https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow')
-
-# Set credentials
-os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
-os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+    dagshub.init(
+        repo_owner='sreesh49',
+        repo_name='YT-Capstone-Project',
+        mlflow=True,
+        oauth=False
+    )
+else:
+    print("⚠️ DAGSHUB_TOKEN missing → running without DagsHub tracking")
 
 
 def load_model(file_path: str):
