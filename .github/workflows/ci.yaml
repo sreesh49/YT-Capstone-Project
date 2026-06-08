@@ -29,7 +29,7 @@ jobs:
 
       - name: run pipeline
         env:
-            DAGSHUB_TOKEN: ${{ secrets.CAPSTONE_TOKEN }}
+            DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
