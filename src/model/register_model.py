@@ -10,21 +10,24 @@ from src.logger import logging
 # MLflow Setup (CI + DVC SAFE)
 # =========================
 def setup_mlflow():
+    import os
+    import mlflow
+    import dagshub
 
     token = os.getenv("DAGSHUB_TOKEN")
 
     if not token:
         raise EnvironmentError("DAGSHUB_TOKEN not set")
 
-    # ✅ REQUIRED for DagsHub MLflow auth
+    # ✅ MUST be exactly this
     os.environ["MLFLOW_TRACKING_USERNAME"] = "token"
     os.environ["MLFLOW_TRACKING_PASSWORD"] = token
 
-    # ✅ IMPORTANT: always set explicitly
-    mlflow.set_tracking_uri(
+    os.environ["MLFLOW_TRACKING_URI"] = (
         "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
     )
 
+    
     dagshub.init(
         repo_owner="sreesh49",
         repo_name="YT-Capstone-Project",

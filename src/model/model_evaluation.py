@@ -24,22 +24,23 @@ def setup_mlflow():
     if not token:
         raise EnvironmentError("DAGSHUB_TOKEN not set")
 
-    # 🔥 IMPORTANT: correct DagsHub MLflow auth
+    # ✅ MUST be exactly this
     os.environ["MLFLOW_TRACKING_USERNAME"] = "token"
     os.environ["MLFLOW_TRACKING_PASSWORD"] = token
 
-    mlflow.set_tracking_uri(
+    os.environ["MLFLOW_TRACKING_URI"] = (
         "https://dagshub.com/sreesh49/YT-Capstone-Project.mlflow"
     )
 
+    # IMPORTANT: initialize dagshub FIRST
     dagshub.init(
         repo_owner="sreesh49",
         repo_name="YT-Capstone-Project",
         mlflow=True
     )
 
+    # ONLY AFTER AUTH
     mlflow.set_experiment("my-dvc-pipeline")
-
 
 # =========================
 # Utils
