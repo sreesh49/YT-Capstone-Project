@@ -121,6 +121,9 @@ def main():
         )
 
         logging.info("Data ingestion completed successfully")
+        print("AWS KEY EXISTS:", bool(aws_access_key))
+        print("SECRET EXISTS:", bool(aws_secret_key))
+        print("AWS KEY PREFIX:", aws_access_key[:4])
 
     except Exception as e:
 
