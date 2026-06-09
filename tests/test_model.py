@@ -46,12 +46,7 @@ class TestModelLoading(unittest.TestCase):
 
         mlflow.set_tracking_uri(mlflow_tracking_uri)
 
-        dagshub.init(
-            repo_owner=repo_owner,
-            repo_name=repo_name,
-            mlflow=True,
-            
-        )
+        
 
         # -----------------------------
         # Load latest registered model
