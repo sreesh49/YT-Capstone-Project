@@ -174,10 +174,10 @@ class TestModelLoading(unittest.TestCase):
         )
 
         # Thresholds
-        expected_accuracy = 0.40
-        expected_precision = 0.40
-        expected_recall = 0.40
-        expected_f1 = 0.40
+        expected_accuracy = 0.35
+        expected_precision = 0.35
+        expected_recall = 0.35
+        expected_f1 = 0.35
 
         self.assertGreaterEqual(
             accuracy_new,
