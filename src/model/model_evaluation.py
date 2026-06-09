@@ -17,20 +17,43 @@ from src.logger import logging
 
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
 
-if not dagshub_token:
-    raise EnvironmentError("DAGSHUB_TOKEN is not set")
+# -----------------------------
+# CI MODE
+# -----------------------------
+if os.getenv("CI") == "true":
 
-os.environ["DAGSHUB_USER_TOKEN"] = dagshub_token
+    print("CI detected → using local MLflow")
 
-os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
-os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+    mlflow.set_tracking_uri("file:./mlruns")
 
-dagshub.init(
-        repo_owner='sreesh49',
-        repo_name='YT-Capstone-Project',
-        mlflow=True,
-        
+# -----------------------------
+# LOCAL / PRODUCTION
+# -----------------------------
+elif dagshub_token:
+
+    os.environ["DAGSHUB_USER_TOKEN"] = dagshub_token
+
+    os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+    repo_owner = "sreesh49"
+    repo_name = "YT-Capstone-Project"
+
+    mlflow.set_tracking_uri(
+        f"https://dagshub.com/{repo_owner}/{repo_name}.mlflow"
     )
+
+    dagshub.init(
+        repo_owner=repo_owner,
+        repo_name=repo_name,
+        mlflow=True
+    )
+
+else:
+
+    print("No DAGSHUB_TOKEN → using local MLflow")
+
+    mlflow.set_tracking_uri("file:./mlruns")
 
 
 
