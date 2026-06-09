@@ -80,9 +80,10 @@ repo_name = "YT-Capstone-Project"
 
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
 
-if dagshub_token:
+if not dagshub_token:
+    raise EnvironmentError("DAGSHUB_TOKEN is not set")
 
-    print("Connecting to DAGsHub MLflow...")
+    os.environ["DAGSHUB_USER_TOKEN"] = dagshub_token
 
     os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
     os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token

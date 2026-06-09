@@ -17,21 +17,21 @@ from src.logger import logging
 
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
 
-if os.getenv("CI") == "true":
-    print("CI detected → skipping DAGsHub tracking completely")
+if not dagshub_token:
+    raise EnvironmentError("DAGSHUB_TOKEN is not set")
 
-elif dagshub_token:
-    os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
-    os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+os.environ["DAGSHUB_USER_TOKEN"] = dagshub_token
 
-    dagshub.init(
+os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+dagshub.init(
         repo_owner='sreesh49',
         repo_name='YT-Capstone-Project',
         mlflow=True,
         
     )
-else:
-    print("No DAGSHUB_TOKEN → skipping tracking")
+
 
 
 def load_model(file_path: str):
