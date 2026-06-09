@@ -28,7 +28,7 @@ elif dagshub_token:
         repo_owner='sreesh49',
         repo_name='YT-Capstone-Project',
         mlflow=True,
-        auth_token=dagshub_token  # IMPORTANT FIX
+        
     )
 else:
     print("No DAGSHUB_TOKEN → skipping tracking")

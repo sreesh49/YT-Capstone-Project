@@ -49,7 +49,7 @@ class TestModelLoading(unittest.TestCase):
             repo_owner=repo_owner,
             repo_name=repo_name,
             mlflow=True,
-            auth_token=dagshub_token
+            
         )
 
         # -----------------------------
