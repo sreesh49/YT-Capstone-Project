@@ -1,19 +1,22 @@
+
 name: CI Pipeline
 
 on: push
 
 jobs:
   project-testing:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout code
+
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: setup python
-        uses: actions/setup-python@v2
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Cache pip dependencies
         uses: actions/cache@v3
@@ -23,61 +26,93 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: install dependencies
+      - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: run pipeline
+      # ---------------------------------------------------------
+      # AWS Credentials
+      # ---------------------------------------------------------
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ---------------------------------------------------------
+      # DVC Pipeline
+      # ---------------------------------------------------------
+      - name: Run pipeline
         env:
-            DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
-            CI: "true"
-            GITHUB_ACTIONS: "true"
-            MLFLOW_ALLOW_FILE_STORE: "true"
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          CI: "true"
+          GITHUB_ACTIONS: "true"
+          MLFLOW_ALLOW_FILE_STORE: "true"
         run: |
           dvc repro
 
-
+      # ---------------------------------------------------------
+      # Model Tests
+      # ---------------------------------------------------------
       - name: Run model tests
         env:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           python -m unittest tests/test_model.py
 
+      # ---------------------------------------------------------
+      # Promote Model
+      # ---------------------------------------------------------
       - name: Promote model to production
         if: success()
         env:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: python scripts/promote_model.py
+        run: |
+          python scripts/promote_model.py
 
+      # ---------------------------------------------------------
+      # Flask App Tests
+      # ---------------------------------------------------------
       - name: Run Flask app tests
         if: success()
         env:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: python -m unittest tests/test_flask_app.py
-
-      - name: Login to AWS ECR
-        if: success()
         run: |
-            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws configure set region ${{ secrets.AWS_REGION }}
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          python -m unittest tests/test_flask_app.py
 
+      # ---------------------------------------------------------
+      # Login to AWS ECR
+      # ---------------------------------------------------------
+      - name: Login to Amazon ECR
+        if: success()
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ---------------------------------------------------------
+      # Build Docker Image
+      # ---------------------------------------------------------
       - name: Build Docker image
         run: |
-            docker build -t ${{ secrets.ECR_REPOSITORY }}:latest .
+          docker build -t ${{ secrets.ECR_REPOSITORY }}:latest .
 
+      # ---------------------------------------------------------
+      # Tag Docker Image
+      # ---------------------------------------------------------
       - name: Tag Docker image
         run: |
-            docker tag ${{ secrets.ECR_REPOSITORY }}:latest \
-            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
- 
-      - name: Check Docker Authentication
-        run: docker info
+          docker tag ${{ secrets.ECR_REPOSITORY }}:latest \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
+      # ---------------------------------------------------------
+      # Push Docker Image
+      # ---------------------------------------------------------
       - name: Push Docker image to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          docker push \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
