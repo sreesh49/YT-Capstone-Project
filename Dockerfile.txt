@@ -4,11 +4,17 @@ WORKDIR /app
 
 COPY flask_app/ /app/
 
+RUN mkdir -p /app/models
+
+COPY models/model.pkl /app/models/model.pkl
+
 COPY models/vectorizer.pkl /app/models/vectorizer.pkl
 
 RUN pip install -r requirements.txt
 
 RUN python -m nltk.downloader stopwords wordnet
+
+
 
 EXPOSE 5000
 
