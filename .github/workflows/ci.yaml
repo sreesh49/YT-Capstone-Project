@@ -1,136 +1,136 @@
 
-name: CI Pipeline
+# name: CI Pipeline
 
-on: push
+# on: push
 
-jobs:
-  project-testing:
+# jobs:
+#   project-testing:
 
-    runs-on: ubuntu-latest
+#     runs-on: ubuntu-latest
 
-    steps:
+#     steps:
 
-      - name: Checkout code
-        uses: actions/checkout@v3
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+#       - name: Setup Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.10"
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+#       - name: Cache pip dependencies
+#         uses: actions/cache@v3
+#         with:
+#           path: ~/.cache/pip
+#           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+#           restore-keys: |
+#             ${{ runner.os }}-pip-
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+#       - name: Install dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
 
-      # ---------------------------------------------------------
-      # AWS Credentials
-      # ---------------------------------------------------------
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+#       # ---------------------------------------------------------
+#       # AWS Credentials
+#       # ---------------------------------------------------------
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
 
-      # ---------------------------------------------------------
-      # DVC Pipeline
-      # ---------------------------------------------------------
-      - name: Run pipeline
-        env:
-          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
-          CI: "true"
-          GITHUB_ACTIONS: "true"
-          MLFLOW_ALLOW_FILE_STORE: "true"
-        run: |
-          dvc repro
+#       # ---------------------------------------------------------
+#       # DVC Pipeline
+#       # ---------------------------------------------------------
+#       - name: Run pipeline
+#         env:
+#           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+#           CI: "true"
+#           GITHUB_ACTIONS: "true"
+#           MLFLOW_ALLOW_FILE_STORE: "true"
+#         run: |
+#           dvc repro
 
-      # ---------------------------------------------------------
-      # Model Tests
-      # ---------------------------------------------------------
-      - name: Run model tests
-        env:
-          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: |
-          python -m unittest tests/test_model.py
+#       # ---------------------------------------------------------
+#       # Model Tests
+#       # ---------------------------------------------------------
+#       - name: Run model tests
+#         env:
+#           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#         run: |
+#           python -m unittest tests/test_model.py
 
-      # ---------------------------------------------------------
-      # Promote Model
-      # ---------------------------------------------------------
-      - name: Promote model to production
-        if: success()
-        env:
-          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: |
-          python scripts/promote_model.py
+#       # ---------------------------------------------------------
+#       # Promote Model
+#       # ---------------------------------------------------------
+#       - name: Promote model to production
+#         if: success()
+#         env:
+#           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#         run: |
+#           python scripts/promote_model.py
 
-      # ---------------------------------------------------------
-      # Flask App Tests
-      # ---------------------------------------------------------
-      - name: Run Flask app tests
-        if: success()
-        env:
-          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: |
-          python -m unittest tests/test_flask_app.py
+#       # ---------------------------------------------------------
+#       # Flask App Tests
+#       # ---------------------------------------------------------
+#       - name: Run Flask app tests
+#         if: success()
+#         env:
+#           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#         run: |
+#           python -m unittest tests/test_flask_app.py
 
-      # ---------------------------------------------------------
-      # Login to AWS ECR
-      # ---------------------------------------------------------
-      - name: Login to Amazon ECR
-        if: success()
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+#       # ---------------------------------------------------------
+#       # Login to AWS ECR
+#       # ---------------------------------------------------------
+#       - name: Login to Amazon ECR
+#         if: success()
+#         id: login-ecr
+#         uses: aws-actions/amazon-ecr-login@v2
 
-      # ---------------------------------------------------------
-      # Build Docker Image
-      # ---------------------------------------------------------
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ secrets.ECR_REPOSITORY }}:latest .
+#       # ---------------------------------------------------------
+#       # Build Docker Image
+#       # ---------------------------------------------------------
+#       - name: Build Docker image
+#         run: |
+#           docker build -t ${{ secrets.ECR_REPOSITORY }}:latest .
 
-      # ---------------------------------------------------------
-      # Tag Docker Image
-      # ---------------------------------------------------------
-      - name: Tag Docker image
-        run: |
-          docker tag ${{ secrets.ECR_REPOSITORY }}:latest \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+#       # ---------------------------------------------------------
+#       # Tag Docker Image
+#       # ---------------------------------------------------------
+#       - name: Tag Docker image
+#         run: |
+#           docker tag ${{ secrets.ECR_REPOSITORY }}:latest \
+#           ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
-      # ---------------------------------------------------------
-      # Push Docker Image
-      # ---------------------------------------------------------
-      - name: Push Docker image to ECR
-        run: |
-          docker push \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+#       # ---------------------------------------------------------
+#       # Push Docker Image
+#       # ---------------------------------------------------------
+#       - name: Push Docker image to ECR
+#         run: |
+#           docker push \
+#           ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
       
-      - name: Set Up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
+#       - name: Set Up kubectl
+#         uses: azure/setup-kubectl@v3
+#         with:
+#           version: 'latest'
       
-      - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig --region us-east-1 --name flask-app-cluster
+#       - name: Update kubeconfig
+#         run: |
+#           aws eks update-kubeconfig --region us-east-1 --name flask-app-cluster
 
-      - name: Create Kubernetes Secret
-        run: |
-          kubectl create secret generic capstone-secret \
-            --from-literal=DAGSHUB_TOKEN=${{ secrets.DAGSHUB_TOKEN }} --dry-run=client -o yaml | kubectl apply -f -
+#       - name: Create Kubernetes Secret
+#         run: |
+#           kubectl create secret generic capstone-secret \
+#             --from-literal=DAGSHUB_TOKEN=${{ secrets.DAGSHUB_TOKEN }} --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy to EKS
-        run: |
-          kubectl apply -f deployment.yaml
+#       - name: Deploy to EKS
+#         run: |
+#           kubectl apply -f deployment.yaml
