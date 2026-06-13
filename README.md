@@ -69,34 +69,34 @@ text
 🛠 Technologies & Tools
 🐍 Core Stack
 Tool	Purpose	Badge
-Python 3.10	Primary language	https://img.shields.io/badge/Python-3.10-blue.svg
-Flask	Web framework / API serving	https://img.shields.io/badge/Flask-2.0+-black.svg
-Cookiecutter	Project templating	https://img.shields.io/badge/Cookiecutter-DS-EF7B2D.svg
+Python 3.10	Primary language	
+Flask	Web framework / API serving	
+Cookiecutter	Project templating	
 🔬 ML & Experimentation
 Tool	Purpose	Badge
-MLflow	Experiment tracking & model registry	https://img.shields.io/badge/MLflow-Tracking-orange.svg
-DagsHub	MLflow hosting & collaboration	https://img.shields.io/badge/DagsHub-Integrated-1E88E5.svg
-DVC	Data version control & pipeline	https://img.shields.io/badge/DVC-Pipeline-9C27B0.svg
+MLflow	Experiment tracking & model registry	
+DagsHub	MLflow hosting & collaboration	
+DVC	Data version control & pipeline	
 🐳 Containerization & Orchestration
 Tool	Purpose	Badge
-Docker	Containerization	https://img.shields.io/badge/Docker-Container-blue.svg
-Amazon EKS	Kubernetes orchestration	https://img.shields.io/badge/K8s-EKS-FF9900.svg
-kubectl	K8s cluster management	https://img.shields.io/badge/kubectl-Managed-326CE5.svg
-eksctl	EKS cluster provisioning	https://img.shields.io/badge/eksctl-Provisioned-FF9900.svg
+Docker	Containerization	
+Amazon EKS	Kubernetes orchestration	
+kubectl	K8s cluster management	
+eksctl	EKS cluster provisioning	
 ☁️ AWS Services
 Service	Purpose	Badge
-S3	Data storage & DVC remote	https://img.shields.io/badge/S3-Storage-569A31.svg
-ECR	Docker image registry	https://img.shields.io/badge/ECR-Registry-FF9900.svg
-IAM	Security & access management	https://img.shields.io/badge/IAM-Secure-DD344C.svg
-CloudFormation	Infrastructure as Code	https://img.shields.io/badge/CFN-IaC-FF9900.svg
+S3	Data storage & DVC remote	
+ECR	Docker image registry	
+IAM	Security & access management	
+CloudFormation	Infrastructure as Code	
 📊 Monitoring & Observability
 Tool	Purpose	Badge
-Prometheus	Metrics collection	https://img.shields.io/badge/Prometheus-Metrics-E6522C.svg
-Grafana	Visualization & dashboards	https://img.shields.io/badge/Grafana-Dashboards-F46800.svg
+Prometheus	Metrics collection	
+Grafana	Visualization & dashboards	
 🔄 CI/CD & Version Control
 Tool	Purpose	Badge
-GitHub Actions	CI/CD automation	https://img.shields.io/badge/GitHub_Actions-CI/CD-2088FF.svg
-Git	Version control	https://img.shields.io/badge/Git-Versioned-F05032.svg
+GitHub Actions	CI/CD automation	
+Git	Version control	
 ⭐ Key Features
 1. Data Version Control (DVC)
 📦 Dataset versioning in S3
@@ -281,9 +281,6 @@ Implement Terraform for advanced IaC
 
 Add Istio service mesh for advanced routing
 
-📞 Contact & Connect
 
-Sreesh Sreekumar
 
-www.linkedin.com/in/sreesh-sreekumar-253097271
 
